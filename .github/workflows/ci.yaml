@@ -15,13 +15,13 @@ jobs:
           - os: ubuntu-latest
             triplet: x86_64-unknown-linux-gnu
             artifact: chip-8-emu
-          # - os: windows-latest
-          #   triplet: x86_64-pc-windows-msvc
-          #   artifact: chip-8-emu.exe
+          - os: windows-latest
+            triplet: x86_64-pc-windows-msvc
+            artifact: chip-8-emu.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: install rust tools
+      - name: Install Rust tools
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -31,9 +31,9 @@ jobs:
       - run: cargo install cargo-vcpkg
       - run: cargo vcpkg build
       - run: cargo build --release
-      - name: upload app
+      - name: Upload app
         uses: actions/upload-artifact@v3
         with:
-          name: chip-8-emu
+          name: chip-8-emu-${{ matrix.triplet }}
           path: ${{ github.workspace }}/target/release/${{ matrix.artifact }}
           retention-days: 1
