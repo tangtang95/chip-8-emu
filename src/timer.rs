@@ -5,7 +5,7 @@ pub struct Timer {
 
 impl Timer {
     pub fn new() -> Self {
-        Self {delay: 0u8, sound: 0u8}
+        Self {delay: 0, sound: 0}
     }
 
     pub fn set_delay_timer(&mut self, value: u8) {
@@ -32,6 +32,10 @@ impl Timer {
         } else {
             unimplemented!();
         }
+    }
+
+    pub fn get_delay_timer(&self) -> u8 {
+        self.delay
     }
 }
 

@@ -9,6 +9,7 @@ edition = "2021"
 log = "0.4"
 gl = "0.14.0"
 simple_logger = "4.0.0"
+rand = "0.8"
 
 [dependencies.sdl2]
 version = "0.35"
