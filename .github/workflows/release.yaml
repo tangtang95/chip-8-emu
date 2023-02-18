@@ -20,9 +20,9 @@ jobs:
       - run: cargo install cargo-vcpkg
       - run: cargo vcpkg build
       - run: cargo build --release
-      - name: Upload app
-        uses: actions/upload-artifact@v3
-        with:
-          name: chip-8-emu-${{ matrix.triplet }}
-          path: ${{ github.workspace }}/target/release/${{ matrix.artifact }}
-          retention-days: 1
+      # - name: Upload app
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: chip-8-emu-${{ matrix.triplet }}
+      #     path: ${{ github.workspace }}/target/release/${{ matrix.artifact }}
+      #     retention-days: 1
