@@ -21,7 +21,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: vcpkg
-          args: build
+          args: build --target x86_64-pc-windows-msvc
       - uses: actions-rs/cargo@v1
         with:
           command: build
