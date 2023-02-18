@@ -1,5 +1,5 @@
-use log::{debug, error, info};
-use sdl2::{event::Event, keyboard::Keycode, pixels::{Color, PixelFormatEnum}, surface::Surface};
+use log::{debug, info};
+use sdl2::{event::Event, keyboard::{Keycode}, pixels::{Color, PixelFormatEnum}, surface::Surface};
 use simple_logger::SimpleLogger;
 use std::{time::Duration, io::{BufReader, Read, Result as IOResult}, fs::File};
 use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
@@ -32,7 +32,7 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let window = sdl_context
         .video()?
-        .window("Window", 640, 320)
+        .window("Chip-8 Emulator", 640, 320)
         .opengl()
         .build()
         .map_err(|e| e.to_string())?;
@@ -48,7 +48,7 @@ fn main() -> Result<(), String> {
     let mut memory = Memory::new();
     memory.load_font_data();
     memory.load_rom_data(
-        &(read_rom_from_file("roms/IBM logo.ch8").map_err(|e| e.to_string())?)
+        &(read_rom_from_file("roms/BC_test.ch8").map_err(|e| e.to_string())?)
     );
 
     let mut timer = Timer::new();
@@ -63,7 +63,7 @@ fn main() -> Result<(), String> {
             }
         }
 
-        cpu.update();
+        cpu.tick();
         let mut pixels: Vec<u8> = cpu.get_display()
             .iter()
             .flat_map(|array| array.iter())
