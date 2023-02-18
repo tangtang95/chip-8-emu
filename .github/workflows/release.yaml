@@ -1,17 +1,20 @@
-name: CI
+name: Release
 
-on: [push]
+on:
+  push:
+    tags:
+      - "*"
 
 jobs:
-  build:
-    name: build (x86_64-unknown-linux-gnu)
-    runs-on: ubuntu-latest
+  build_windows: 
+    name: build (x86_64-pc-windows-msvc)
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-gnu
+          target: x86_64-pc-windows-msvc
           override: true
       - run: | 
           cargo install cargo-vcpkg
