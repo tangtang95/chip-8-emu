@@ -1,0 +1,33 @@
+name: CI
+
+on: [push]
+
+env:
+  RUST_PROFILE: minimal
+  RUST_VERSION: stable
+
+jobs:
+  build:
+    name: Build (${{ matrix.triplet }})
+    strategy:
+      matrix:
+        include: 
+          - os: ubuntu-latest
+            triplet: x86_64-unknown-linux-gnu
+            artifact: chip-8-emu
+          # - os: windows-latest
+          #   triplet: x86_64-pc-windows-msvc
+          #   artifact: chip-8-emu.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust tools
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          target: ${{ matrix.triplet }}
+          profile: ${{ env.RUST_PROFILE }}
+          override: true
+      - run: cargo install cargo-vcpkg
+      - run: cargo vcpkg build
+      - run: cargo build --release
