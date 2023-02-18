@@ -6,7 +6,7 @@ name: CI
 jobs:
   build_and_test:
     name: build (x86_64-pc-windows-msvc)
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -18,11 +18,14 @@ jobs:
         with:
           command: install
           args: cargo-vcpkg
+          use-cross: true
       - uses: actions-rs/cargo@v1
         with:
           command: vcpkg
           args: build --target x86_64-pc-windows-msvc
+          use-cross: true
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --target x86_64-pc-windows-msvc
+          use-cross: true
