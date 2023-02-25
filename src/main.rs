@@ -5,14 +5,14 @@ use simple_logger::SimpleLogger;
 use std::{time::Duration, io::{BufReader, Read}, fs::File};
 use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
 
-fn find_sdl_gl_driver() -> Option<u32> {
+fn find_sdl_gl_driver() -> Result<u32, Error> {
     for (index, item) in sdl2::render::drivers().enumerate() {
         if item.name == "opengl" {
             debug!(target: "SDL2", "OpenGL driver found: {}", index);
-            return Some(index as u32);
+            return Ok(index as u32);
         }
     }
-    None
+    Err(Error::msg("Could not find OpenGL driver!"))
 }
 
 fn read_rom_from_file(file_path: &str) -> Result<Vec<u8>, Error> {
@@ -39,7 +39,7 @@ fn main() -> Result<(), Error> {
         .build()?;
     let mut canvas = window
         .into_canvas()
-        .index(find_sdl_gl_driver().unwrap())
+        .index(find_sdl_gl_driver()?)
         .build()?;
     
     let texture_creator = canvas.texture_creator();
@@ -69,7 +69,7 @@ fn main() -> Result<(), Error> {
             .collect();
         let mut surface = Surface::from_data(&mut pixels, 64, 32, 64, PixelFormatEnum::Index8).map_err(Error::msg)?;
         surface.set_color_key(true, Color::BLACK).map_err(Error::msg)?;
-        let texture = texture_creator.create_texture_from_surface(surface).unwrap();
+        let texture = texture_creator.create_texture_from_surface(surface)?;
         canvas.copy(&texture, None, None).map_err(Error::msg)?;
         canvas.present();
 
