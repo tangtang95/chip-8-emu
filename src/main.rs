@@ -1,7 +1,8 @@
+use anyhow::Error;
 use log::{debug, info};
 use sdl2::{event::Event, keyboard::{Keycode}, pixels::{Color, PixelFormatEnum}, surface::Surface};
 use simple_logger::SimpleLogger;
-use std::{time::Duration, io::{BufReader, Read, Result as IOResult}, fs::File};
+use std::{time::Duration, io::{BufReader, Read}, fs::File};
 use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
 
 fn find_sdl_gl_driver() -> Option<u32> {
@@ -14,7 +15,7 @@ fn find_sdl_gl_driver() -> Option<u32> {
     None
 }
 
-fn read_rom_from_file(file_path: &str) -> IOResult<Vec<u8>> {
+fn read_rom_from_file(file_path: &str) -> Result<Vec<u8>, Error> {
     let file_handle = File::open(file_path)?;
     let mut reader = BufReader::new(file_handle);
     let mut buffer = Vec::new();
@@ -24,32 +25,29 @@ fn read_rom_from_file(file_path: &str) -> IOResult<Vec<u8>> {
     Ok(buffer)
 }
 
-fn main() -> Result<(), String> {
-    SimpleLogger::new().init().map_err(|e| e.to_string())?;
+fn main() -> Result<(), Error> {
+    SimpleLogger::new().init()?;
 
     info!("Chip 8 Emulator is starting...");
 
-    let sdl_context = sdl2::init()?;
+    let sdl_context = sdl2::init().map_err(Error::msg)?;
     let window = sdl_context
-        .video()?
+        .video()
+        .map_err(Error::msg)?
         .window("Chip-8 Emulator", 640, 320)
         .opengl()
-        .build()
-        .map_err(|e| e.to_string())?;
+        .build()?;
     let mut canvas = window
         .into_canvas()
         .index(find_sdl_gl_driver().unwrap())
-        .build()
-        .map_err(|e| e.to_string())?;
+        .build()?;
     
     let texture_creator = canvas.texture_creator();
-    let mut event_pump = sdl_context.event_pump()?;
+    let mut event_pump = sdl_context.event_pump().map_err(Error::msg)?;
 
     let mut memory = Memory::new();
     memory.load_font_data();
-    memory.load_rom_data(
-        &(read_rom_from_file("roms/BC_test.ch8").map_err(|e| e.to_string())?)
-    );
+    memory.load_rom_data(&(read_rom_from_file("roms/BC_test.ch8")?));
 
     let mut timer = Timer::new();
 
@@ -69,10 +67,10 @@ fn main() -> Result<(), String> {
             .flat_map(|array| array.iter())
             .cloned()
             .collect();
-        let mut surface = Surface::from_data(&mut pixels, 64, 32, 64, PixelFormatEnum::Index8)?;
-        surface.set_color_key(true, Color::BLACK)?;
+        let mut surface = Surface::from_data(&mut pixels, 64, 32, 64, PixelFormatEnum::Index8).map_err(Error::msg)?;
+        surface.set_color_key(true, Color::BLACK).map_err(Error::msg)?;
         let texture = texture_creator.create_texture_from_surface(surface).unwrap();
-        canvas.copy(&texture, None, None)?;
+        canvas.copy(&texture, None, None).map_err(Error::msg)?;
         canvas.present();
 
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
