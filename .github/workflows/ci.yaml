@@ -29,6 +29,8 @@ jobs:
         with:
           file: Cargo.toml
           field: package.metadata.vcpkg.rev
+      - name: Prepare vcpkg directories
+        run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
       - name: Cache Cargo Rust
         uses: actions/cache@v3
         with:
