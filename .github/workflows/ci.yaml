@@ -5,8 +5,8 @@ on: [push]
 env:
   RUST_PROFILE: minimal
   RUST_VERSION: stable
-  VCPKG_DEFAULT_BINARY_CACHE: /cache/vcpkg-binary-cache
-  XDG_CACHE_HOME: /cache/xdg
+  VCPKG_DEFAULT_BINARY_CACHE: /home/vcpkg-binary-cache
+  XDG_CACHE_HOME: /home/.xdg
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
           mkdir -p $XDG_CACHE_HOME
-          ls -la /cache
+          ls -la /home
       - name: Cache Cargo Rust
         uses: actions/cache@v3
         with:
