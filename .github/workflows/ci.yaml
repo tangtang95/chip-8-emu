@@ -54,5 +54,5 @@ jobs:
           profile: ${{ env.RUST_PROFILE }}
           override: true
       - run: cargo install cargo-vcpkg
-      - run: cargo vcpkg build
+      - run: cargo vcpkg -v build
       - run: cargo build --release
