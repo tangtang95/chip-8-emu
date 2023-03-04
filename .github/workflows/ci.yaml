@@ -64,5 +64,6 @@ jobs:
       #   with:
       #     crate: cargo-vcpkg
       - run: cargo install cargo-vcpkg
+        continue-on-error: true
       - run: cargo vcpkg -v build
       - run: cargo build --release
