@@ -44,12 +44,15 @@ jobs:
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
             ~/.cache/vcpkg/archives
           key: ${{ runner.os }}-vcpkg-${{ env.VCPKG_CACHE_KEY }}
-      - name: Cache Cargo Binary Rust
+      - name: Cache Cargo Rust
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
-          key: ${{ runner.os }}-cargo-vcpkg-${{ env.CARGO_VCPKG_VERSION }}
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-vcpkg-${{ env.CARGO_VCPKG_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust tools
         uses: actions-rs/toolchain@v1
         with:
