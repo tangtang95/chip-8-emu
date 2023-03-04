@@ -23,17 +23,25 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+      - name: Install Rust tools
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          target: ${{ matrix.triplet }}
+          profile: ${{ env.RUST_PROFILE }}
+          override: true
       - name: Get vcpkg metadata
         uses: SebRollen/toml-action@v1.0.1
         id: vcpkg_version
         with:
           file: Cargo.toml
           field: package.metadata.vcpkg
-      - name: Prepare vcpkg directories and key
+      - name: Prepare vcpkg directories and cache keys
         run: |
           mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
           mkdir -p $XDG_CACHE_HOME
           echo "VCPKG_CACHE_KEY=$(echo ${{ steps.vcpkg_version.outputs.value }} | sha256sum | tr -d '\n *-')" >> $GITHUB_ENV
+          echo "CARGO_VCPKG_CACHE_KEY=$(cargo search cargo-vcpkg | grep cargo-vcpkg | cut -d'"' -f 2)" >> $GITHUB_ENV
           ls -la /home/runner
       - name: Cache vcpkg
         uses: actions/cache@v3
@@ -43,22 +51,12 @@ jobs:
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
             ~/.cache/vcpkg/archives
           key: ${{ runner.os }}-vcpkg-${{ env.VCPKG_CACHE_KEY }}
-      - name: Cache Cargo Rust
+      - name: Cache Cargo Binary Rust
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust tools
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          target: ${{ matrix.triplet }}
-          profile: ${{ env.RUST_PROFILE }}
-          override: true
+          key: ${{ runner.os }}-cargo-${{ env.CARGO_VCPKG_CACHE_KEY }}
       # - name: Install cargo-vcpkg (with caching)
       #   uses: baptiste0928/cargo-install@v1
       #   with:
