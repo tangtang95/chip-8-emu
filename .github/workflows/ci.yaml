@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get vcpkg metadata
         uses: SebRollen/toml-action@v1.0.1
-        id: vcpkg_version
+        id: vcpkg_metadata
         with:
           file: Cargo.toml
           field: package.metadata.vcpkg
@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
           mkdir -p $XDG_CACHE_HOME
-          echo "VCPKG_CACHE_KEY=$(echo ${{ steps.vcpkg_version.outputs.value }} | sha256sum | tr -d '\n *-')" >> $GITHUB_ENV
+          echo "VCPKG_CACHE_KEY=$(echo ${{ steps.vcpkg_metadata.outputs.value }} | sha256sum | tr -d '\n *-')" >> $GITHUB_ENV
           ls -la /home/runner
       - name: Cache vcpkg
         uses: actions/cache@v3
