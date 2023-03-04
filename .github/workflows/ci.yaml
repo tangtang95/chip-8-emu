@@ -7,6 +7,7 @@ env:
   RUST_VERSION: stable
   VCPKG_DEFAULT_BINARY_CACHE: /home/runner/vcpkg-binary-cache
   XDG_CACHE_HOME: /home/runner/.xdg
+  CARGO_VCPKG_VERSION: 0.1.7
 
 jobs:
   build:
@@ -23,13 +24,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: Install Rust tools
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          target: ${{ matrix.triplet }}
-          profile: ${{ env.RUST_PROFILE }}
-          override: true
       - name: Get vcpkg metadata
         uses: SebRollen/toml-action@v1.0.1
         id: vcpkg_version
@@ -41,7 +35,6 @@ jobs:
           mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
           mkdir -p $XDG_CACHE_HOME
           echo "VCPKG_CACHE_KEY=$(echo ${{ steps.vcpkg_version.outputs.value }} | sha256sum | tr -d '\n *-')" >> $GITHUB_ENV
-          echo "CARGO_VCPKG_CACHE_KEY=$(cargo search cargo-vcpkg | grep cargo-vcpkg | cut -d'"' -f 2)" >> $GITHUB_ENV
           ls -la /home/runner
       - name: Cache vcpkg
         uses: actions/cache@v3
@@ -56,12 +49,15 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ${{ runner.os }}-cargo-vcpkg-${{ env.CARGO_VCPKG_CACHE_KEY }}
-      # - name: Install cargo-vcpkg (with caching)
-      #   uses: baptiste0928/cargo-install@v1
-      #   with:
-      #     crate: cargo-vcpkg
-      - run: cargo install cargo-vcpkg
+          key: ${{ runner.os }}-cargo-vcpkg-${{ env.CARGO_VCPKG_VERSION }}
+      - name: Install Rust tools
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          target: ${{ matrix.triplet }}
+          profile: ${{ env.RUST_PROFILE }}
+          override: true
+      - run: cargo install cargo-vcpkg@${{ env.CARGO_VCPKG_VERSION }}
         continue-on-error: true
       - run: cargo vcpkg -v build
       - run: cargo build --release
