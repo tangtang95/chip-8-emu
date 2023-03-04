@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: Get vcpkg rev version
+      - name: Get vcpkg metadata
         uses: SebRollen/toml-action@v1.0.1
         id: vcpkg_version
         with:
@@ -50,9 +50,10 @@ jobs:
           target: ${{ matrix.triplet }}
           profile: ${{ env.RUST_PROFILE }}
           override: true
-      - name: Install cargo-vcpkg (with caching)
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-vcpkg
+      # - name: Install cargo-vcpkg (with caching)
+      #   uses: baptiste0928/cargo-install@v1
+      #   with:
+      #     crate: cargo-vcpkg
+      - run: cargo install cargo-vcpkg
       - run: cargo vcpkg -v build
       - run: cargo build --release
