@@ -34,15 +34,6 @@ jobs:
           mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
           mkdir -p $XDG_CACHE_HOME
           ls -la /home/runner
-      - name: Cache Cargo Rust
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache vcpkg
         uses: actions/cache@v3
         with:
@@ -58,6 +49,9 @@ jobs:
           target: ${{ matrix.triplet }}
           profile: ${{ env.RUST_PROFILE }}
           override: true
-      - run: cargo install cargo-vcpkg
+      - name: Install cargo-vcpkg (with caching)
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-vcpkg
       - run: cargo vcpkg -v build
       - run: cargo build --release
