@@ -29,10 +29,11 @@ jobs:
         with:
           file: Cargo.toml
           field: package.metadata.vcpkg
-      - name: Prepare vcpkg directories
+      - name: Prepare vcpkg directories and key
         run: |
           mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
           mkdir -p $XDG_CACHE_HOME
+          echo "VCPKG_CACHE_KEY=$(echo ${{ steps.vcpkg_version.outputs.value }} | sha256sum | tr -d '\n *-')" >> $GITHUB_ENV
           ls -la /home/runner
       - name: Cache vcpkg
         uses: actions/cache@v3
@@ -41,7 +42,7 @@ jobs:
             ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
             ~/.cache/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg-${{ steps.vcpkg_version.outputs.value }}
+          key: ${{ runner.os }}-vcpkg-${{ env.VCPKG_CACHE_KEY }}
       - name: Install Rust tools
         uses: actions-rs/toolchain@v1
         with:
