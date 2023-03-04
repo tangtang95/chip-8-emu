@@ -7,7 +7,6 @@ env:
   RUST_VERSION: stable
   VCPKG_DEFAULT_BINARY_CACHE: /home/runner/vcpkg-binary-cache
   XDG_CACHE_HOME: /home/runner/.xdg
-  CARGO_VCPKG_VERSION: 0.1.7
 
 jobs:
   build:
@@ -44,6 +43,17 @@ jobs:
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
             ~/.cache/vcpkg/archives
           key: ${{ runner.os }}-vcpkg-${{ env.VCPKG_CACHE_KEY }}
+      - name: Install Rust tools
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          target: ${{ matrix.triplet }}
+          profile: ${{ env.RUST_PROFILE }}
+          override: true
+      - name: Cargo install cargo-vcpkg
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-vcpkg
       - name: Cache Cargo Rust
         uses: actions/cache@v3
         with:
@@ -52,15 +62,6 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-vcpkg-${{ env.CARGO_VCPKG_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust tools
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          target: ${{ matrix.triplet }}
-          profile: ${{ env.RUST_PROFILE }}
-          override: true
-      - run: cargo install cargo-vcpkg@${{ env.CARGO_VCPKG_VERSION }}
-        continue-on-error: true
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - run: cargo vcpkg -v build
       - run: cargo build --release
