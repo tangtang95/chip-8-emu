@@ -109,4 +109,4 @@ jobs:
       - name: Create Release
         run: |
           TAG_VERSION=${GITHUB_REF#refs/*/}
-          gh release create $TAG_VERSION -d --generate-notes --latest -t "${{ env.APP_NAME }}-$TAG_VERSION" ./${{ env.APP_NAME }}*/*
+          gh release create $TAG_VERSION -d --generate-notes --latest -t "${{ env.APP_NAME }}-$TAG_VERSION" ./target/${{ env.APP_NAME }}*/*
