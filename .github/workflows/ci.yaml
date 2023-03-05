@@ -79,3 +79,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - run: cargo vcpkg -v build
       - run: cargo build --release
+      - name: Upload app
+        uses: actions/upload-artifact@v3
+        with:
+          name: chip-8-emu-${{ matrix.triplet }}
+          path: ${{ github.workspace }}/target/release/${{ matrix.artifact }}
+          retention-days: 1
