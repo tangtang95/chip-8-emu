@@ -87,10 +87,12 @@ jobs:
           retention-days: 1
   
   release:
-    # if: contains(github.ref, 'refs/tags/')
+    # if: ${{ contains(github.ref, 'refs/tags/') }}
     needs: build
     name: Release
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - name: Download artifacts
       uses: actions/download-artifact@v3
