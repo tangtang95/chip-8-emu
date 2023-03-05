@@ -90,7 +90,7 @@ jobs:
   release:
     name: Release
     needs: build
-    # if: ${{ contains(github.ref, 'refs/tags/') }}
+    if: ${{ contains(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +103,6 @@ jobs:
         with:
           path: ./target
       - name: Rename artifacts files
-        working-directory: ${{ github.workspace }}
         run: |
           mkdir release-files
           mv ./target/*windows*/${{ env.APP_NAME }}.exe ./release-files/${{env.APP_NAME }}-x86_64-pc-windows-msvc.exe
@@ -112,4 +111,4 @@ jobs:
       - name: Create Release
         run: |
           TAG_VERSION=${GITHUB_REF#refs/*/}
-          gh release create $TAG_VERSION -d --generate-notes --latest -t "${{ env.APP_NAME }}-$TAG_VERSION" ./release-files/*
+          gh release create $TAG_VERSION --generate-notes --latest -t "${{ env.APP_NAME }}-$TAG_VERSION" ./release-files/*
