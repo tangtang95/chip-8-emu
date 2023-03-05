@@ -102,11 +102,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: ./target
-      - name: Display structure of downloaded files
+      - name: Rename artifacts files
+        working-directory: ${{ github.workspace }}/target
         run: |
-
+          mv ./${{ env.APP_NAME }}*windows*/${{ env.APP_NAME }}.exe ./${{env.APP_NAME }}-x86_64-pc-windows-msvc.exe
+          mv ./${{ env.APP_NAME }}*linux*/${{ env.APP_NAME }} ./${{ env.APP_NAME }}-x86_64-unknown-linux-gnu
           ls -R
       - name: Create Release
         run: |
           TAG_VERSION=${GITHUB_REF#refs/*/}
-          gh release create $TAG_VERSION -d --generate-notes --latest -t "${{ env.APP_NAME }}-$TAG_VERSION" ./target/${{ env.APP_NAME }}*/*
+          gh release create $TAG_VERSION -d --generate-notes --latest -t "${{ env.APP_NAME }}-$TAG_VERSION" ./target/${{ env.APP_NAME }}*
