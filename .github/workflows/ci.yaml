@@ -45,7 +45,7 @@ jobs:
       - name: Prepare vcpkg directories and cache key (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          $VCPKG_METADATA_HASH = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes(${{ steps.vcpkg_metadata.outputs.value }}))).Replace("-", "").ToLower()
+          $VCPKG_METADATA_HASH = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes('${{ steps.vcpkg_metadata.outputs.value }}'))).Replace("-", "").ToLower()
           "VCPKG_CACHE_KEY=$VCPKG_METADATA_HASH" >> $env:GITHUB_ENV
           "VCPKG_DEFAULT_BINARY_CACHE=${{ matrix.vcpkg_default_binary_cache }}" >> $env:GITHUB_ENV
           New-Item -ItemType Directory -Force -Path ${{ matrix.vcpkg_default_binary_cache }}
