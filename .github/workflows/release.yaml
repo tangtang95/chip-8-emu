@@ -1,28 +1,41 @@
 name: Release
 
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
   push:
-    tags:
-      - "*"
+    branches:
+      - feature/ci-add-release
+    # tags:
+    #   - "v*"
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  build_windows: 
-    name: Build Windows
-    runs-on: windows-latest
+  release: 
+    name: Release
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: install rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-pc-windows-msvc
-          override: true
-      - run: cargo install cargo-vcpkg
-      - run: cargo vcpkg build
-      - run: cargo build --release
-      - name: Upload app
-        uses: actions/upload-artifact@v3
-        with:
-          name: chip-8-emu-${{ matrix.triplet }}
-          path: ${{ github.workspace }}/target/release/${{ matrix.artifact }}
-          retention-days: 1
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+    - name: Display structure of downloaded files
+      run: ls -R
+    - name: Create Draft Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: chip-8-emu-${{ github.ref }}
+        draft: true
+        prerelease: false
+    - uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./my-artifact.zip
+        asset_name: my-artifact.zip
+        asset_content_type: application/zip
+    # - uses: eregon/publish-release@v1
+    #   with:
+    #     release_id: ${{ steps.create_release.outputs.id }}
