@@ -5,21 +5,25 @@ on: [push]
 env:
   RUST_PROFILE: minimal
   RUST_VERSION: stable
-  VCPKG_DEFAULT_BINARY_CACHE: /home/runner/vcpkg-binary-cache
-  XDG_CACHE_HOME: /home/runner/.xdg
 
 jobs:
   build:
     name: Build (${{ matrix.triplet }})
     strategy:
       matrix:
-        include: 
+        include:
           - os: ubuntu-latest
             triplet: x86_64-unknown-linux-gnu
             artifact: chip-8-emu
-          # - os: windows-latest
-          #   triplet: x86_64-pc-windows-msvc
-          #   artifact: chip-8-emu.exe
+            vcpkg_default_binary_cache: /home/runner/vcpkg-binary-cache
+            vcpkg_archive_path: /home/runner/.xdg
+            vcpkg_cache_archive_path: "~"
+          - os: windows-latest
+            triplet: x86_64-pc-windows-msvc
+            artifact: chip-8-emu.exe
+            vcpkg_default_binary_cache: $env:USERPROFILE/vcpkg-binary-cache
+            vcpkg_archive_path: $env:LOCALAPPDATA
+            vcpkg_cache_archive_path: $env:APPDATA
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -29,19 +33,30 @@ jobs:
         with:
           file: Cargo.toml
           field: package.metadata.vcpkg
-      - name: Prepare vcpkg directories and cache keys
+      - name: Prepare vcpkg directories and cache key (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
-          mkdir -p $XDG_CACHE_HOME
           echo "VCPKG_CACHE_KEY=$(echo ${{ steps.vcpkg_metadata.outputs.value }} | sha256sum | tr -d '\n *-')" >> $GITHUB_ENV
+          echo "VCPKG_DEFAULT_BINARY_CACHE=${{ matrix.vcpkg_default_binary_cache }}" >> $GITHUB_ENV
+          echo "XDG_CACHE_HOME=${{ matrix.vcpkg_archive_path }}" >> $GITHUB_ENV
+          mkdir -p ${{ matrix.vcpkg_default_binary_cache }}
+          mkdir -p ${{ matrix.vcpkg_archive_path }}
           ls -la /home/runner
+      - name: Prepare vcpkg directories and cache key (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          $VCPKG_METADATA_HASH = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes('${{ steps.vcpkg_metadata.outputs.value }}'))).Replace("-", "").ToLower()
+          "VCPKG_CACHE_KEY=$VCPKG_METADATA_HASH" >> $env:GITHUB_ENV
+          "VCPKG_DEFAULT_BINARY_CACHE=${{ matrix.vcpkg_default_binary_cache }}" >> $env:GITHUB_ENV
+          New-Item -ItemType Directory -Force -Path ${{ matrix.vcpkg_default_binary_cache }}
+          Get-ChildItem $env:USERPROFILE | Format-Table
       - name: Cache vcpkg
         uses: actions/cache@v3
         with:
           path: |
             ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-            ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
-            ~/.cache/vcpkg/archives
+            ${{ matrix.vcpkg_archive_path }}/vcpkg/archives
+            ${{ matrix.vcpkg_cache_archive_path }}/.cache/vcpkg/archives
           key: ${{ runner.os }}-vcpkg-${{ env.VCPKG_CACHE_KEY }}
       - name: Install Rust tools
         uses: actions-rs/toolchain@v1
@@ -64,3 +79,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - run: cargo vcpkg -v build
       - run: cargo build --release
+      - name: Upload app
+        uses: actions/upload-artifact@v3
+        with:
+          name: chip-8-emu-${{ matrix.triplet }}
+          path: ${{ github.workspace }}/target/release/${{ matrix.artifact }}
+          retention-days: 1
