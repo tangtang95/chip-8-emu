@@ -13,35 +13,32 @@ pub struct Cpu<'a> {
     input_state: [u8; 16],
     last_input_state: [u8; 16],
     memory: &'a mut Memory,
-    timer: &'a mut Timer
 }
 
 impl<'a> Cpu<'a> {
-    pub fn new(memory: &'a mut Memory, timer: &'a mut Timer) -> Self {
+    pub fn new(memory: &'a mut Memory) -> Self {
         Cpu {
-            pc: Memory::rom_init_address(),
+            pc: Memory::ROM_INIT_ADDRESS,
             index_reg: 0,
             var_regs: [0; 16],
             stack: Stack::new(),
             display: [[0; 64]; 32],
             input_state: [0; 16],
             last_input_state: [0; 16],
-            memory,
-            timer,
+            memory
         }
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, timer: &mut Timer) {
         let instruction = self.fetch();
         let opcode = self.decode(instruction);
-        self.execute(opcode);
+        self.execute(opcode, timer);
     }
 
     pub fn update_input_state(&mut self, input_state: [u8; 16]) {
         self.last_input_state = self.input_state;
         self.input_state = input_state;
     }
-
 
     pub fn get_display(&self) -> &[[u8; 64]; 32] {
         &self.display
@@ -58,7 +55,7 @@ impl<'a> Cpu<'a> {
         Opcode::from(instruction)
     }
 
-    fn execute(&mut self, opcode: Opcode) {
+    fn execute(&mut self, opcode: Opcode, timer: &mut Timer) {
         match opcode {
             Opcode::MachineLanguageRoutine(_) => unimplemented!(),
             Opcode::Clear => self.opcode_clear(),
@@ -86,9 +83,9 @@ impl<'a> Cpu<'a> {
             Opcode::Display(reg_idx_x, reg_idx_y, n_pixels) => self.opcode_display(reg_idx_x, reg_idx_y, n_pixels),
             Opcode::SkipIfKeyPressed(reg_idx) => self.opcode_skip_if_key_pressed(reg_idx),
             Opcode::SkipIfKeyNotPressed(reg_idx) => self.opcode_skip_if_key_not_pressed(reg_idx),
-            Opcode::CopyDelayTimerValue(reg_idx) => self.var_regs[reg_idx as usize] = self.timer.get_delay_timer(),
-            Opcode::SetDelayTimer(reg_idx) => self.timer.set_delay_timer(self.var_regs[reg_idx as usize]),
-            Opcode::SetSoundTimer(reg_idx) => self.timer.set_sound_timer(self.var_regs[reg_idx as usize]),
+            Opcode::CopyDelayTimerValue(reg_idx) => self.var_regs[reg_idx as usize] = timer.get_delay_timer(),
+            Opcode::SetDelayTimer(reg_idx) => timer.set_delay_timer(self.var_regs[reg_idx as usize]),
+            Opcode::SetSoundTimer(reg_idx) => timer.set_sound_timer(self.var_regs[reg_idx as usize]),
             Opcode::AddIndexRegister(reg_idx) => self.opcode_add_index_register(reg_idx),
             Opcode::GetKey(reg_idx) => self.opcode_get_key(reg_idx),
             Opcode::FontCharacter(reg_idx) => self.opcode_set_index_register_to_font(reg_idx),

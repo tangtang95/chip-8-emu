@@ -53,9 +53,11 @@ fn main() -> Result<(), Error> {
             .map_err(|e| {error!("Could not read ROM {} successfully", &args.rom); e})?)
     );
 
+    info!("ROM {} loaded successfully", &args.rom);
+
     let mut timer = Timer::new();
 
-    let mut cpu = Cpu::new(&mut memory, &mut timer);
+    let mut cpu = Cpu::new(&mut memory);
 
     let sdl_context = sdl2::init().map_err(Error::msg)?;
     let window = sdl_context
@@ -82,7 +84,7 @@ fn main() -> Result<(), Error> {
             }
         }
 
-        cpu.tick();
+        cpu.tick(&mut timer);
         renderer.render_bw_pixels(cpu.get_display())?;
         renderer.update();
 
