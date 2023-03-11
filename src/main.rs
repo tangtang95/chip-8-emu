@@ -3,7 +3,7 @@ pub mod renderer;
 use anyhow::Error;
 use clap::Parser;
 use log::{debug, info, error};
-use sdl2::{event::Event, keyboard::{Keycode}, pixels::{Color, PixelFormatEnum}, surface::Surface};
+use sdl2::{event::Event, keyboard::{Keycode}};
 use simple_logger::SimpleLogger;
 use std::{time::Duration, io::{BufReader, Read}, fs::File};
 use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
