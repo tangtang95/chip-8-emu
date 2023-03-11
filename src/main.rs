@@ -1,5 +1,6 @@
 use anyhow::Error;
-use log::{debug, info};
+use clap::Parser;
+use log::{debug, info, error};
 use sdl2::{event::Event, keyboard::{Keycode}, pixels::{Color, PixelFormatEnum}, surface::Surface};
 use simple_logger::SimpleLogger;
 use std::{time::Duration, io::{BufReader, Read}, fs::File};
@@ -25,10 +26,32 @@ fn read_rom_from_file(file_path: &str) -> Result<Vec<u8>, Error> {
     Ok(buffer)
 }
 
+/// Chip 8 emulator implemented in Rust
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// ROM path to be loaded
+    #[arg(required=true)]
+    rom: String
+}
+
 fn main() -> Result<(), Error> {
+    let args = Args::parse();
+
     SimpleLogger::new().init()?;
 
     info!("Chip 8 Emulator is starting...");
+
+    let mut memory = Memory::new();
+    memory.load_font_data();
+    memory.load_rom_data(
+        &(read_rom_from_file(&args.rom)
+            .map_err(|e| {error!("Could not read ROM {} successfully", &args.rom); e})?)
+    );
+
+    let mut timer = Timer::new();
+
+    let mut cpu = Cpu::new(&mut memory, &mut timer);
 
     let sdl_context = sdl2::init().map_err(Error::msg)?;
     let window = sdl_context
@@ -43,15 +66,7 @@ fn main() -> Result<(), Error> {
         .build()?;
     
     let texture_creator = canvas.texture_creator();
-    let mut event_pump = sdl_context.event_pump().map_err(Error::msg)?;
-
-    let mut memory = Memory::new();
-    memory.load_font_data();
-    memory.load_rom_data(&(read_rom_from_file("roms/BC_test.ch8")?));
-
-    let mut timer = Timer::new();
-
-    let mut cpu = Cpu::new(&mut memory, &mut timer);
+    let mut event_pump = sdl_context.event_pump().map_err(Error::msg)?;    
 
     'main_loop: loop {
         for event in event_pump.poll_iter() {
