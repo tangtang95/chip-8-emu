@@ -11,8 +11,12 @@ impl<const T: usize, const U: usize> Renderer<T, U> {
         let texture_creator = canvas.texture_creator();
         Self {
             canvas, 
-            texture_creator: texture_creator
+            texture_creator
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.canvas.clear();
     }
 
     pub fn render_bw_pixels(&mut self, pixels: &[[u8; T]; U]) -> Result<(), Error> {

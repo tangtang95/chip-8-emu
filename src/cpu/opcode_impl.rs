@@ -129,11 +129,12 @@ impl<'a> Cpu<'a> {
     }
 
     pub(super) fn opcode_get_key(&mut self, reg_idx: u8) {
-        let key_action_state: Vec<i8> = self.input_state.iter().zip(self.input_state.iter())
+        let key_action_state: Vec<i8> = self.input_state.iter().zip(self.last_input_state.iter())
             .map(|(&curr, &prev)| curr as i8 - prev as i8).collect();
 
         let key_released = key_action_state.iter().enumerate()
             .find(|(_, &key_state)| key_state < 0);
+
         match key_released {
             Some((key_idx, _)) => self.var_regs[reg_idx as usize] = key_idx as u8,
             None => self.prev_opcode()

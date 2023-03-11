@@ -3,7 +3,7 @@ pub mod renderer;
 use anyhow::Error;
 use clap::Parser;
 use log::{debug, info, error};
-use sdl2::{event::Event, keyboard::{Keycode}};
+use sdl2::{event::Event, keyboard::{Keycode, Scancode}};
 use simple_logger::SimpleLogger;
 use std::{time::Duration, io::{BufReader, Read}, fs::File};
 use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
@@ -75,6 +75,24 @@ fn main() -> Result<(), Error> {
     );
 
     let mut event_pump = sdl_context.event_pump().map_err(Error::msg)?;
+    let chip8_scancodes = [
+        Scancode::Num1,
+        Scancode::Num2,
+        Scancode::Num3,
+        Scancode::Num4,
+        Scancode::Q,
+        Scancode::W,
+        Scancode::E,
+        Scancode::R,
+        Scancode::A,
+        Scancode::S,
+        Scancode::D,
+        Scancode::F,
+        Scancode::Z,
+        Scancode::X,
+        Scancode::C,
+        Scancode::V,
+    ];
 
     'main_loop: loop {
         for event in event_pump.poll_iter() {
@@ -83,12 +101,18 @@ fn main() -> Result<(), Error> {
                 _ => {}
             }
         }
+        
+        let keyboard_state = event_pump.keyboard_state();
+        let current_input_state: [u8; 16] = chip8_scancodes
+            .map(|scancode| keyboard_state.is_scancode_pressed(scancode) as u8);
 
+        renderer.clear();
+        cpu.update_input_state(current_input_state);
         cpu.tick(&mut timer);
         renderer.render_bw_pixels(cpu.get_display())?;
         renderer.update();
 
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 300));
     }
 
     Ok(())
