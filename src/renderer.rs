@@ -3,7 +3,8 @@ use sdl2::{render::{Canvas, TextureCreator}, video::{Window, WindowContext}, sur
 
 pub struct Renderer<const T: usize, const U: usize> {
     canvas: Canvas<Window>,
-    texture_creator: TextureCreator<WindowContext>
+    texture_creator: TextureCreator<WindowContext>,
+    frequency: u32
 }
 
 impl<const T: usize, const U: usize> Renderer<T, U> {
@@ -11,7 +12,8 @@ impl<const T: usize, const U: usize> Renderer<T, U> {
         let texture_creator = canvas.texture_creator();
         Self {
             canvas, 
-            texture_creator
+            texture_creator,
+            frequency: 60
         }
     }
 
@@ -35,6 +37,10 @@ impl<const T: usize, const U: usize> Renderer<T, U> {
 
     pub fn update(&mut self) {
         self.canvas.present();
+    }
+
+    pub fn get_frequency(&self) -> u32 {
+        self.frequency
     }
 
 }
