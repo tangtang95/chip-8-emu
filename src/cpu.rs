@@ -13,6 +13,7 @@ pub struct Cpu<'a> {
     input_state: [u8; 16],
     last_input_state: [u8; 16],
     memory: &'a mut Memory,
+    op_frequency: u32
 }
 
 impl<'a> Cpu<'a> {
@@ -25,7 +26,8 @@ impl<'a> Cpu<'a> {
             display: [[0; 64]; 32],
             input_state: [0; 16],
             last_input_state: [0; 16],
-            memory
+            memory,
+            op_frequency: 700
         }
     }
 
@@ -42,6 +44,10 @@ impl<'a> Cpu<'a> {
 
     pub fn get_display(&self) -> &[[u8; 64]; 32] {
         &self.display
+    }
+
+    pub fn get_cpu_frequency(&self) -> u32 {
+        self.op_frequency
     }
 
     fn fetch(&mut self) -> u16 {

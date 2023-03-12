@@ -1,11 +1,11 @@
 pub mod renderer;
 
+use std::{time::{Duration, Instant}, io::{BufReader, Read}, fs::File};
 use anyhow::Error;
 use clap::Parser;
 use log::{debug, info, error};
 use sdl2::{event::Event, keyboard::{Keycode, Scancode}};
 use simple_logger::SimpleLogger;
-use std::{time::Duration, io::{BufReader, Read}, fs::File};
 use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
 
 use renderer::Renderer;
@@ -94,6 +94,9 @@ fn main() -> Result<(), Error> {
         Scancode::V,
     ];
 
+    let mut last_cpu_time = Instant::now();
+    let mut last_timer_time = Instant::now();
+    let mut last_renderer_time = Instant::now();
     'main_loop: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -106,13 +109,25 @@ fn main() -> Result<(), Error> {
         let current_input_state: [u8; 16] = chip8_scancodes
             .map(|scancode| keyboard_state.is_scancode_pressed(scancode) as u8);
 
-        renderer.clear();
         cpu.update_input_state(current_input_state);
         cpu.tick(&mut timer);
-        renderer.render_bw_pixels(cpu.get_display())?;
-        renderer.update();
 
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 300));
+        let current_time = Instant::now();
+        
+        if current_time - last_timer_time >= Duration::from_micros((1_000_000f32 / timer.get_frequency() as f32) as u64) {
+            timer.update();
+            last_timer_time = current_time;
+        }
+
+        if current_time - last_renderer_time >= Duration::from_micros((1_000_000f32 / renderer.get_frequency() as f32) as u64) {
+            renderer.clear();
+            renderer.render_bw_pixels(cpu.get_display())?;
+            renderer.update();
+            last_renderer_time = current_time;
+        }
+
+        while Instant::now() - last_cpu_time < Duration::from_micros(((1_000_000f32 / cpu.get_cpu_frequency() as f32)) as u64) {};
+        last_cpu_time = Instant::now();
     }
 
     Ok(())
