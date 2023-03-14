@@ -27,16 +27,15 @@ impl Timer {
     }
 
     fn update_sound_timer(&mut self) {
-        if self.sound > 0 { 
-            self.sound -= 1;
-
-        } else {
-
-        }
+        if self.sound > 0 { self.sound -= 1 };
     }
 
     pub fn get_delay_timer(&self) -> u8 {
         self.delay
+    }
+
+    pub fn get_sound_timer(&self) -> u8 {
+        self.sound
     }
 
     pub fn get_frequency(&self) -> u32 {
