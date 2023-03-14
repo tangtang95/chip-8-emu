@@ -1,4 +1,5 @@
 pub mod renderer;
+pub mod sound;
 
 use std::{time::{Duration, Instant}, io::{BufReader, Read}, fs::File};
 use anyhow::Error;
@@ -6,9 +7,28 @@ use clap::Parser;
 use log::{debug, info, error};
 use sdl2::{event::Event, keyboard::{Keycode, Scancode}, audio::AudioSpecDesired};
 use simple_logger::SimpleLogger;
-use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer, sound::SquareWave};
-
+use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
 use renderer::Renderer;
+use sound::SquareWave;
+
+const CHIP8_KEYS: [Scancode; 16] = [
+    Scancode::Num1,
+    Scancode::Num2,
+    Scancode::Num3,
+    Scancode::Num4,
+    Scancode::Q,
+    Scancode::W,
+    Scancode::E,
+    Scancode::R,
+    Scancode::A,
+    Scancode::S,
+    Scancode::D,
+    Scancode::F,
+    Scancode::Z,
+    Scancode::X,
+    Scancode::C,
+    Scancode::V,
+];
 
 fn find_sdl_gl_driver() -> Result<u32, Error> {
     for (index, item) in sdl2::render::drivers().enumerate() {
@@ -29,25 +49,6 @@ fn read_rom_from_file(file_path: &str) -> Result<Vec<u8>, Error> {
     
     Ok(buffer)
 }
-
-const CHIP8_KEYS: [Scancode; 16] = [
-    Scancode::Num1,
-    Scancode::Num2,
-    Scancode::Num3,
-    Scancode::Num4,
-    Scancode::Q,
-    Scancode::W,
-    Scancode::E,
-    Scancode::R,
-    Scancode::A,
-    Scancode::S,
-    Scancode::D,
-    Scancode::F,
-    Scancode::Z,
-    Scancode::X,
-    Scancode::C,
-    Scancode::V,
-];
 
 /// Chip 8 emulator implemented in Rust
 #[derive(Parser, Debug)]
