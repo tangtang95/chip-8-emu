@@ -4,9 +4,9 @@ use std::{time::{Duration, Instant}, io::{BufReader, Read}, fs::File};
 use anyhow::Error;
 use clap::Parser;
 use log::{debug, info, error};
-use sdl2::{event::Event, keyboard::{Keycode, Scancode}};
+use sdl2::{event::Event, keyboard::{Keycode, Scancode}, audio::AudioSpecDesired};
 use simple_logger::SimpleLogger;
-use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
+use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer, sound::SquareWave};
 
 use renderer::Renderer;
 
@@ -29,6 +29,25 @@ fn read_rom_from_file(file_path: &str) -> Result<Vec<u8>, Error> {
     
     Ok(buffer)
 }
+
+const CHIP8_KEYS: [Scancode; 16] = [
+    Scancode::Num1,
+    Scancode::Num2,
+    Scancode::Num3,
+    Scancode::Num4,
+    Scancode::Q,
+    Scancode::W,
+    Scancode::E,
+    Scancode::R,
+    Scancode::A,
+    Scancode::S,
+    Scancode::D,
+    Scancode::F,
+    Scancode::Z,
+    Scancode::X,
+    Scancode::C,
+    Scancode::V,
+];
 
 /// Chip 8 emulator implemented in Rust
 #[derive(Parser, Debug)]
@@ -74,25 +93,23 @@ fn main() -> Result<(), Error> {
             .build()?
     );
 
+    let audio_subsystem = sdl_context.audio().map_err(Error::msg)?;
+    let desired_spec = AudioSpecDesired {
+        freq: Some(44100),
+        channels: Some(1),  // mono
+        samples: None       // default sample size
+    };
+
+    let audio_device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
+        SquareWave {
+            phase_inc: 440.0 / spec.freq as f32,
+            phase: 0.0,
+            volume: 0.25
+        }
+    }).map_err(Error::msg)?;
+
     let mut event_pump = sdl_context.event_pump().map_err(Error::msg)?;
-    let chip8_scancodes = [
-        Scancode::Num1,
-        Scancode::Num2,
-        Scancode::Num3,
-        Scancode::Num4,
-        Scancode::Q,
-        Scancode::W,
-        Scancode::E,
-        Scancode::R,
-        Scancode::A,
-        Scancode::S,
-        Scancode::D,
-        Scancode::F,
-        Scancode::Z,
-        Scancode::X,
-        Scancode::C,
-        Scancode::V,
-    ];
+    
 
     let mut last_cpu_time = Instant::now();
     let mut last_timer_time = Instant::now();
@@ -106,7 +123,7 @@ fn main() -> Result<(), Error> {
         }
         
         let keyboard_state = event_pump.keyboard_state();
-        let current_input_state: [u8; 16] = chip8_scancodes
+        let current_input_state: [u8; 16] = CHIP8_KEYS
             .map(|scancode| keyboard_state.is_scancode_pressed(scancode) as u8);
 
         cpu.update_input_state(current_input_state);
@@ -115,7 +132,13 @@ fn main() -> Result<(), Error> {
         let current_time = Instant::now();
         
         if current_time - last_timer_time >= Duration::from_micros((1_000_000f32 / timer.get_frequency() as f32) as u64) {
+            if timer.get_sound_timer() > 0 {
+                audio_device.resume();
+            } else {
+                audio_device.pause();
+            }
             timer.update();
+
             last_timer_time = current_time;
         }
 
