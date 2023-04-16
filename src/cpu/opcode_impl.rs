@@ -1,7 +1,51 @@
 use rand::Rng;
 use super::Cpu;
 
-impl<'a> Cpu<'a> {
+pub trait ShiftBehavior<'a, T> : Clone {
+    fn opcode_shift_left_register(&self, cpu: &mut Cpu<'a, T>, reg_idx_x: u8, reg_idx_y: u8);
+    fn opcode_shift_right_register(&self, cpu: &mut Cpu<'a, T>, reg_idx_x: u8, reg_idx_y: u8);
+}
+
+fn default_opcode_shift_left_register<'a, T: ShiftBehavior<'a, T>>(cpu: &mut Cpu<'a, T>, reg_idx_x: u8) {
+    let x = cpu.var_regs[reg_idx_x as usize];
+    cpu.set_flag_register((x & (1 << 7) > 0) as u8);
+    cpu.var_regs[reg_idx_x as usize] = x << 1;
+}
+
+fn default_opcode_shift_right_register<'a, T: ShiftBehavior<'a, T>>(cpu: &mut Cpu<'a, T>, reg_idx_x: u8) {
+    let x = cpu.var_regs[reg_idx_x as usize];
+    cpu.set_flag_register(x & 0x1);
+    cpu.var_regs[reg_idx_x as usize] = x >> 1;
+}
+
+#[derive(Clone)]
+pub struct OldShiftBehavior;
+impl<'a> ShiftBehavior<'a, OldShiftBehavior> for OldShiftBehavior {
+    fn opcode_shift_left_register(&self, cpu: &mut Cpu<'a, OldShiftBehavior>, reg_idx_x: u8, _: u8) {
+        default_opcode_shift_left_register(cpu, reg_idx_x);
+    }
+
+    fn opcode_shift_right_register(&self, cpu: &mut Cpu<'a, OldShiftBehavior>, reg_idx_x: u8, _: u8) {
+        default_opcode_shift_right_register(cpu, reg_idx_x);
+    }
+}
+
+#[derive(Clone)]
+pub struct NewShiftBehavior;
+impl<'a> ShiftBehavior<'a, NewShiftBehavior> for NewShiftBehavior {
+    fn opcode_shift_left_register(&self, cpu: &mut Cpu<'a, NewShiftBehavior>, reg_idx_x: u8, reg_idx_y: u8) {
+        cpu.var_regs[reg_idx_x as usize] = cpu.var_regs[reg_idx_y as usize];
+        default_opcode_shift_left_register(cpu, reg_idx_x);
+    }
+
+    fn opcode_shift_right_register(&self, cpu: &mut Cpu<'a, NewShiftBehavior>, reg_idx_x: u8, reg_idx_y: u8) {
+        cpu.var_regs[reg_idx_x as usize] = cpu.var_regs[reg_idx_y as usize];
+        default_opcode_shift_right_register(cpu, reg_idx_x);
+    }
+}
+
+impl<'a, T> Cpu<'a, T>
+where T: ShiftBehavior<'a, T> {
     pub(super) fn opcode_clear(&mut self) {
         self.display.fill([0; 64]);
     }
@@ -47,18 +91,12 @@ impl<'a> Cpu<'a> {
         self.var_regs[dest_reg_idx as usize] = result;
     }
 
-    pub(super) fn opcode_shift_left_register(&mut self, reg_idx_x: u8, _: u8) {
-        // TODO: add configurable step "self.var_regs[reg_idx_x as usize] = self.var_regs[reg_idx_y as usize]"
-        let x = self.var_regs[reg_idx_x as usize];
-        self.set_flag_register((x & (1 << 7) > 0) as u8);
-        self.var_regs[reg_idx_x as usize] = x << 1;
+    pub(super) fn opcode_shift_left_register(&mut self, reg_idx_x: u8, reg_idx_y: u8) {
+        self.shift_logic.clone().opcode_shift_left_register(self, reg_idx_x, reg_idx_y);
     }
 
-    pub(super) fn opcode_shift_right_register(&mut self, reg_idx_x: u8, _: u8) {
-        // TODO: add configurable step "self.var_regs[reg_idx_x as usize] = self.var_regs[reg_idx_y as usize]"
-        let x = self.var_regs[reg_idx_x as usize];
-        self.set_flag_register(x & 0x1);
-        self.var_regs[reg_idx_x as usize] = x >> 1;
+    pub(super) fn opcode_shift_right_register(&mut self, reg_idx_x: u8, reg_idx_y: u8) {
+        self.shift_logic.clone().opcode_shift_right_register(self, reg_idx_x, reg_idx_y);
     }
 
     pub(super) fn opcode_set_index_register(&mut self, value: usize) {

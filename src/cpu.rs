@@ -2,9 +2,9 @@ pub mod opcode;
 pub mod opcode_impl;
 
 use crate::{memory::Memory, stack::Stack, timer::Timer};
-use self::opcode::Opcode;
+use self::{opcode::Opcode, opcode_impl::ShiftBehavior};
 
-pub struct Cpu<'a> {
+pub struct Cpu<'a, T> {
     pc: usize,
     index_reg: usize,
     var_regs: [u8; 16],
@@ -13,11 +13,13 @@ pub struct Cpu<'a> {
     input_state: [u8; 16],
     last_input_state: [u8; 16],
     memory: &'a mut Memory,
-    op_frequency: u32
+    op_frequency: u32,
+    shift_logic: T
 }
 
-impl<'a> Cpu<'a> {
-    pub fn new(memory: &'a mut Memory) -> Self {
+impl<'a, T> Cpu<'a, T>
+where T: ShiftBehavior<'a, T> {
+    pub fn new(memory: &'a mut Memory, shift_logic: T) -> Self {
         Cpu {
             pc: Memory::ROM_INIT_ADDRESS,
             index_reg: 0,
@@ -27,7 +29,8 @@ impl<'a> Cpu<'a> {
             input_state: [0; 16],
             last_input_state: [0; 16],
             memory,
-            op_frequency: 700
+            op_frequency: 700,
+            shift_logic
         }
     }
 

@@ -7,7 +7,7 @@ use clap::Parser;
 use log::{debug, info, error};
 use sdl2::{event::Event, keyboard::{Keycode, Scancode}, audio::AudioSpecDesired};
 use simple_logger::SimpleLogger;
-use chip_8_emu::{cpu::Cpu, memory::Memory, timer::Timer};
+use chip_8_emu::{cpu::{Cpu, opcode_impl::OldShiftBehavior}, memory::Memory, timer::Timer};
 use renderer::Renderer;
 use sound::SquareWave;
 
@@ -77,7 +77,7 @@ fn main() -> Result<(), Error> {
 
     let mut timer = Timer::new();
 
-    let mut cpu = Cpu::new(&mut memory);
+    let mut cpu = Cpu::new(&mut memory, OldShiftBehavior);
 
     let sdl_context = sdl2::init().map_err(Error::msg)?;
     let window = sdl_context
