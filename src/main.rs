@@ -150,7 +150,7 @@ fn main() -> Result<(), Error> {
             last_renderer_time = current_time;
         }
 
-        while Instant::now() - last_cpu_time < Duration::from_micros(((1_000_000f32 / cpu.get_cpu_frequency() as f32)) as u64) {};
+        while Instant::now() - last_cpu_time < Duration::from_micros((1_000_000f32 / cpu.get_cpu_frequency() as f32) as u64) {};
         last_cpu_time = Instant::now();
     }
 

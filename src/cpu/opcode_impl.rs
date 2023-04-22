@@ -95,7 +95,7 @@ impl<'a> Cpu<'a> {
             let mut x = initial_x;
             let sprite_byte = self.memory.read_byte(self.index_reg + i as usize);
             for j in 0..8 {
-                let bitmask = 1 << 7 - j;
+                let bitmask = 1 << (7 - j);
                 let sprite_bit_on = (sprite_byte & bitmask) > 0;
                 if sprite_bit_on {
                     if self.display[y][x] > 0 {

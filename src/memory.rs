@@ -55,6 +55,12 @@ impl Memory {
 
 }
 
+impl Default for Memory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Memory;
